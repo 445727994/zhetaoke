@@ -281,8 +281,8 @@ Zhetaoke::good('account1')->list();
 
 打赏时请记得备注上你的 github 账号或者其他链接，谢谢支持！
 
-![image](https://wx3.sinaimg.cn/wap720/0061xUcrly1g0kw49vd4zj30tz14qgo8.jpg)
-![image](https://wx3.sinaimg.cn/wap720/0061xUcrly1g0kw49z67mj30go0p075i.jpg)
+<img src="https://ws2.sinaimg.cn/wap720/0061xUcrgy1g0l6y5jzeaj30go0ksdh5.jpg" alt="微信支付" height="320">
+<img src="https://wx3.sinaimg.cn/wap720/0061xUcrgy1g0l6y5s4yqj30go0klta0.jpg" alt="支付宝" height="320">
 
 ## License
 
