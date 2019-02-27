@@ -281,8 +281,8 @@ Zhetaoke::good('account1')->list();
 
 打赏时请记得备注上你的 github 账号或者其他链接，谢谢支持！
 
-![image](//wx3.sinaimg.cn/wap720/0061xUcrly1g0kw49vd4zj30tz14qgo8.jpg)
-![image](//wx3.sinaimg.cn/wap720/0061xUcrly1g0kw49z67mj30go0p075i.jpg)
+![image](https://wx3.sinaimg.cn/wap720/0061xUcrly1g0kw49vd4zj30tz14qgo8.jpg)
+![image](https://wx3.sinaimg.cn/wap720/0061xUcrly1g0kw49z67mj30go0p075i.jpg)
 
 ## License
 
