@@ -13,7 +13,7 @@
 - 用户发送商品链接，或者含淘口令的文案，自动返回高佣转链后的淘口令文案
 - 通过采集其他群发布的优惠券信息，自动转化为自己的链接，自动发单
 - 参考案例：微信扫描加技术交流（体验）群
-<img src="https://ws2.sinaimg.cn/wap720/0061xUcrgy1g0m5a5j894j30fz0iomym.jpg" alt="image" height="300">
+<img src="https://wx3.sinaimg.cn/wap720/0061xUcrgy1g0voha9ebuj30fc0i5q4f.jpg" alt="image" height="300">
 
 ## 安装
 
