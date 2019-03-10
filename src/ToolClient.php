@@ -172,7 +172,7 @@ class ToolClient extends BaseClient
         $response = $this->requestZhetaoke($url);
         $response = $this->requestOfficialUrl($response['url']);
 
-        return $response['tbk_sc_order_get_response']['results']['n_tbk_order'];
+        return $response['tbk_sc_order_get_response']['results']['n_tbk_order'] ?? [];
     }
 
     public function ordersByCreateAt($startAt, $span = 1200)
