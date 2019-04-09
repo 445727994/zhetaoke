@@ -10,6 +10,7 @@
 
 namespace Levelooy\Zhetaoke;
 
+use Illuminate\Support\Carbon;
 use Levelooy\Zhetaoke\Kernel\BaseClient;
 use Levelooy\Zhetaoke\Kernel\Exceptions\AlimamaErrorResponseException;
 use Levelooy\Zhetaoke\Kernel\Exceptions\InvalidArgumentException;
@@ -19,14 +20,13 @@ class ToolClient extends BaseClient
     public function smartConvert($content, $pid)
     {
         if (is_numeric($content)) {
-            return $this->convertGoodId($content, $pid);
+            return $this->convertGoodId($content, $pid, true);
         }
 
-        $goodId = $this->parseGoodId($content);
+        $coupon = $this->parseGoodId($content);
+        $goodsId = $coupon['item_id'];
 
-        $activityId = $this->parseActivityId($content);
-
-        return $this->convertGoodId($goodId, $pid, true, $activityId);
+        return $this->convertGoodId($goodsId, $pid, true, $coupon);
     }
 
     public function convertTpwd($tpwd, $pid, $aggregated = false)
@@ -38,14 +38,14 @@ class ToolClient extends BaseClient
             .'appkey=%s&sid=%s&pid=%s&tkl=%s&signurl=1';
         $url = sprintf($baseUrl, $this->appKey, $this->sid, $pid, $tpwd);
 
-        $activityId = $this->parseActivityId($tpwd);
+        $coupon = $this->parseGoodId($tpwd);
 
-        $response = $this->convert($url, $activityId);
+        $response = $this->convert($url, $coupon);
 
         return $aggregated ? $this->addExtraTo($response) : $response;
     }
 
-    public function convertGoodId($goodId, $pid, $aggregated = false, $activityId = null)
+    public function convertGoodId($goodId, $pid, $aggregated = false, $coupon = null)
     {
         if (empty($goodId) || empty($pid)) {
             throw new InvalidArgumentException('参数不能为空（商品ID/pid）');
@@ -55,7 +55,7 @@ class ToolClient extends BaseClient
             .'appkey=%s&sid=%s&pid=%s&num_iid=%s&signurl=1';
         $url = sprintf($baseUrl, $this->appKey, $this->sid, $pid, $goodId);
 
-        $response = $this->convert($url, $activityId);
+        $response = $this->convert($url, $coupon);
 
         // 折淘客的其他优惠券接口，好像只能查出已经附加了这个优惠券的淘口令或者链接的 activity_id。所以，下面的代码无用
 
@@ -65,20 +65,22 @@ class ToolClient extends BaseClient
     public function parseGoodId($content)
     {
         if (empty($content)) {
-            throw new InvalidArgumentException('参数不能为空: 支持淘口令文案、长链接、二合一链接、短链接、喵口令');
+            throw new InvalidArgumentException('参数不能为空: 支持淘口令文案、长链接、二合一链接、短链接、喵口令、新浪短链，可直接返回特殊优惠券');
         }
 
         $baseUrl = 'http://api.zhetaoke.com:10000/api/open_shangpin_id.ashx?'
-            .'appkey=%s&sid=%s&content=%s';
+            .'appkey=%s&sid=%s&content=%s&type=1';
         $url = sprintf($baseUrl, $this->appKey, $this->sid, \urlencode($content));
 
         $formatResponse = $this->requestZhetaoke($url);
 
-        return $formatResponse['item_id'];
+        return $formatResponse;
     }
 
     public function parseActivityId($content)
     {
+        exit('此接口，官方已放弃维护！');
+
         if (empty($content)) {
             throw new InvalidArgumentException('参数不能为空: 支持淘口令文案或者二合一链接或者长链接或者短链接');
         }
@@ -116,16 +118,20 @@ class ToolClient extends BaseClient
 
         $tpwdUrl = $url;
         $baseUrl = 'http://api.zhetaoke.com:10000/api/open_tkl_create.ashx?'
-            .'appkey=%s&sid=%s&text=%s&url=%s&logo=%s';
+            .'appkey=%s&sid=%s&text=%s&url=%s&logo=%s&signurl=1';
         $url = sprintf($baseUrl, $this->appKey, $this->sid, \urlencode($title), \urlencode($url), \urlencode($logo));
 
         $response = $this->requestZhetaoke($url);
 
-        if (empty($response['model'])) {
+        $response = $this->requestOfficialUrl($response['url']);
+
+        $data = $response['tbk_tpwd_create_response']['data'];
+
+        if (empty($data['model'])) {
             throw new AlimamaErrorResponseException('生成淘口令为空，请检查你的参数，url 必须以 https 开头，而且是淘宝的链接，当前 url 为 '.$tpwdUrl);
         }
 
-        return $response['model'];
+        return $data['model'];
     }
 
     public function shortUrl($url, $target = 'sina')
@@ -185,7 +191,7 @@ class ToolClient extends BaseClient
         return $this->orders($startAt, 'settle_time', $span);
     }
 
-    protected function convert($url, $activityId)
+    protected function convert($url, $coupon = null)
     {
         $response = $this->requestZhetaoke($url);
 
@@ -193,9 +199,16 @@ class ToolClient extends BaseClient
 
         $data = $response['tbk_privilege_get_response']['result']['data'];
 
-        if ($activityId) {
-            $data['activity_id'] = $activityId;
-            $data['coupon_click_url'] .= '&activityId='.$activityId;
+        $coupon_amount = 0;
+
+        if (isset($data['coupon_info'])) {
+            preg_match_all('/(\d+)/', $data['coupon_info'], $matches);
+            $coupon_amount = $matches[0][1];
+        }
+
+        if (isset($coupon['effectiveEndTime']) && Carbon::parse($coupon['effectiveEndTime'])->gt(Carbon::now()) && $coupon['amount'] > $coupon_amount) {
+            $data['activity_id'] = $coupon['activity_id'];
+            $data['coupon_click_url'] .= '&activityId='.$coupon['activity_id'];
         }
 
         return $data;
